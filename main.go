@@ -5,10 +5,16 @@ import (
 )
 
 func main() {
+	const port = "8080"
+
 	mux := http.NewServeMux()
 
+	fileServer := http.FileServer(http.Dir("."))
+
+	mux.Handle("/", fileServer)
+
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: mux,
 	}
 
