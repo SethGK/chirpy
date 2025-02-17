@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -21,8 +22,10 @@ type ErrorResponse struct {
 }
 
 type SuccessResponse struct {
-	Valid bool `json:"valid"`
+	CleanedBody string `json:"cleaned_body"`
 }
+
+var profaneWords = []string{"kerfuffle", "sharbert", "fornax"}
 
 func main() {
 	const filepathRoot = "."
@@ -103,7 +106,22 @@ func HandlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, SuccessResponse{Valid: true}, http.StatusOK)
+	cleanedBody := cleanChirpBody(req.Body)
+	sendJSONResponse(w, SuccessResponse{CleanedBody: cleanedBody}, http.StatusOK)
+}
+
+func cleanChirpBody(body string) string {
+	words := strings.Split(body, " ")
+	for i, word := range words {
+		normalizedWord := strings.ToLower(word)
+		for _, profane := range profaneWords {
+			if normalizedWord == profane {
+				words[i] = "****"
+				break
+			}
+		}
+	}
+	return strings.Join(words, " ")
 }
 
 func sendJSONResponse(w http.ResponseWriter, response interface{}, statusCode int) {
