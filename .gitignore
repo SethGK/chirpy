@@ -20,3 +20,4 @@ out
 # Dependencies
 vendor/
 .env
+chirpy
