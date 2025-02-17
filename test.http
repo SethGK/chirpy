@@ -28,3 +28,21 @@ Content-Type: application/json
 {
     "email": "user5@example.com"
 }
+
+###
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "email": "saul@bettercall.com"
+}
+
+###
+POST http://localhost:8080/api/chirps
+Content-Type: application/json
+
+{
+  "body": "This is my first chirp!",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+

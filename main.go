@@ -38,6 +38,19 @@ type ChirpRequest struct {
 	Body string `json:"body"`
 }
 
+type CreateChirpRequest struct {
+	Body   string `json:"body"`
+	UserID string `json:"user_id"`
+}
+
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -89,7 +102,10 @@ func main() {
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerAdminMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerAdminReset)
-	mux.HandleFunc("/api/validate_chirp", HandlerValidateChirp)
+	// Register the new chirp endpoint.
+	mux.HandleFunc("POST /api/chirps", func(w http.ResponseWriter, r *http.Request) {
+		handlerCreateChirp(&apiCfg, w, r)
+	})
 
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -175,13 +191,14 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	sendJSONResponse(w, user, http.StatusCreated)
 }
 
-func HandlerValidateChirp(w http.ResponseWriter, r *http.Request) {
+// handlerCreateChirp now decodes into CreateChirpRequest so it gets both body and user_id.
+func handlerCreateChirp(cfg *apiConfig, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, `{"error": "Invalid request method"}`, http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req ChirpRequest
+	var req CreateChirpRequest
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&req)
 	if err != nil {
@@ -196,7 +213,32 @@ func HandlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cleanedBody := cleanChirpBody(req.Body)
-	sendJSONResponse(w, SuccessResponse{CleanedBody: cleanedBody}, http.StatusOK)
+
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		sendJSONResponse(w, ErrorResponse{Error: "Invalid user_id"}, http.StatusBadRequest)
+		return
+	}
+
+	dbChirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
+		Body:   cleanedBody,
+		UserID: userID,
+	})
+	if err != nil {
+		log.Printf("Error creating chirp: %s", err)
+		sendJSONResponse(w, ErrorResponse{Error: "Failed to create chirp"}, http.StatusInternalServerError)
+		return
+	}
+
+	apiChirp := Chirp{
+		ID:        dbChirp.ID,
+		CreatedAt: dbChirp.CreatedAt,
+		UpdatedAt: dbChirp.UpdatedAt,
+		Body:      dbChirp.Body,
+		UserID:    dbChirp.UserID,
+	}
+
+	sendJSONResponse(w, apiChirp, http.StatusCreated)
 }
 
 func cleanChirpBody(body string) string {
