@@ -20,3 +20,11 @@ Content-Type: application/json
 {
   "body": "I dislike the kerfuffle and the sharbert situation"
 }
+
+###
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+    "email": "user5@example.com"
+}

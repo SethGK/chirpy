@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,14 +9,29 @@ import (
 	"os"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/SethGK/chirpy/internal/database"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db             *database.Queries
+	platform       string
+}
+
+type CreateUserRequest struct {
+	Email string `json:"email"`
+}
+
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdateAt  time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
 }
 
 type ChirpRequest struct {
@@ -53,19 +67,18 @@ func main() {
 	defer db.Close()
 
 	dbQueries := database.New(db)
-
-	email := "user@example.com"
-	user, err := dbQueries.CreateUser(context.Background(), email)
-	if err != nil {
-		log.Fatal(err)
+	platform := os.Getenv("PLATFORM")
+	if platform == "" {
+		platform = "prod"
 	}
 
-	fmt.Printf("Created user: %+v\n", user)
+	apiCfg := apiConfig{
+		db:       dbQueries,
+		platform: platform,
+	}
 
 	const filepathRoot = "."
 	const port = "8080"
-
-	apiCfg := apiConfig{}
 
 	mux := http.NewServeMux()
 
@@ -73,7 +86,7 @@ func main() {
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", fileServer)))
 
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
-
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerAdminMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerAdminReset)
 	mux.HandleFunc("/api/validate_chirp", HandlerValidateChirp)
@@ -115,9 +128,51 @@ func (cfg *apiConfig) handlerAdminMetrics(w http.ResponseWriter, r *http.Request
 }
 
 func (cfg *apiConfig) handlerAdminReset(w http.ResponseWriter, r *http.Request) {
-	cfg.fileserverHits.Store(0)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hits counter reset\n"))
+	if cfg.platform != "dev" {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	err := cfg.db.DeleteAllUsers(r.Context())
+	if err != nil {
+		log.Printf("Error deleting users: %s", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, map[string]string{"message": "All users deleted"}, http.StatusOK)
+}
+
+func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error": "Invalid request method"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req CreateUserRequest
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&req)
+	if err != nil {
+		log.Printf("Error decoding JSON: %s", err)
+		sendJSONResponse(w, ErrorResponse{Error: "Invalid JSON"}, http.StatusBadRequest)
+		return
+	}
+
+	userRes, err := cfg.db.CreateUser(r.Context(), req.Email)
+	if err != nil {
+		log.Printf("Error creating user: %s", err)
+		sendJSONResponse(w, ErrorResponse{Error: "Failed to create user"}, http.StatusInternalServerError)
+		return
+	}
+
+	user := User{
+		ID:        userRes.ID,
+		CreatedAt: userRes.CreatedAt,
+		UpdateAt:  userRes.UpdatedAt,
+		Email:     userRes.Email,
+	}
+
+	sendJSONResponse(w, user, http.StatusCreated)
 }
 
 func HandlerValidateChirp(w http.ResponseWriter, r *http.Request) {
