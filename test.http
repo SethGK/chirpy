@@ -1,0 +1,14 @@
+POST http://localhost:8080/api/validate_chirp
+Content-Type: application/json
+
+{
+  "body": "This is a valid chirp!"
+}
+
+###
+POST http://localhost:8080/api/validate_chirp
+Content-Type: application/json
+
+{
+  "body": "This is an invalid chirp because it is way too long................................................................................................."
+}

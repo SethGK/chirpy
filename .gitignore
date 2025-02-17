@@ -1,0 +1,20 @@
+out# OS & Editor-Specific Files
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+
+# Go Build Artifacts
+bin/
+pkg/
+out/
+*.exe
+*.o
+*.a
+*.so
+
+# Windows Metadata
+*.Zone.Identifier
+
+# Dependencies
+vendor/
