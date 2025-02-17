@@ -1,4 +1,4 @@
-out# OS & Editor-Specific Files
+# OS & Editor-Specific Files
 .DS_Store
 Thumbs.db
 *.swp
@@ -7,7 +7,7 @@ Thumbs.db
 # Go Build Artifacts
 bin/
 pkg/
-out/
+out
 *.exe
 *.o
 *.a
