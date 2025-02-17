@@ -1,12 +1,19 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
+
+	"github.com/SethGK/chirpy/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
@@ -28,6 +35,33 @@ type SuccessResponse struct {
 var profaneWords = []string{"kerfuffle", "sharbert", "fornax"}
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("DB_URL is not set in .env")
+	}
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	dbQueries := database.New(db)
+
+	email := "user@example.com"
+	user, err := dbQueries.CreateUser(context.Background(), email)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Created user: %+v\n", user)
+
 	const filepathRoot = "."
 	const port = "8080"
 
