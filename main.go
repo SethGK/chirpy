@@ -22,6 +22,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	jwtSecret      string
 }
 
 type CreateUserRequest struct {
@@ -41,8 +42,7 @@ type ChirpRequest struct {
 }
 
 type CreateChirpRequest struct {
-	Body   string `json:"body"`
-	UserID string `json:"user_id"`
+	Body string `json:"body"`
 }
 
 type Chirp struct {
@@ -75,6 +75,11 @@ func main() {
 		log.Fatal("DB_URL is not set in .env")
 	}
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is not set in .env")
+	}
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
@@ -88,8 +93,9 @@ func main() {
 	}
 
 	apiCfg := apiConfig{
-		db:       dbQueries,
-		platform: platform,
+		db:        dbQueries,
+		platform:  platform,
+		jwtSecret: jwtSecret,
 	}
 
 	const filepathRoot = "."
@@ -221,10 +227,19 @@ func handlerCreateChirp(cfg *apiConfig, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var req CreateChirpRequest
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&req)
+	tokenString, err := auth.GetBearersToken(r.Header)
 	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, err := auth.ValidateJWT(tokenString, cfg.jwtSecret)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req CreateChirpRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("Error decoding JSON: %s", err)
 		sendJSONResponse(w, ErrorResponse{Error: "Invalid JSON"}, http.StatusBadRequest)
 		return
@@ -236,12 +251,6 @@ func handlerCreateChirp(cfg *apiConfig, w http.ResponseWriter, r *http.Request) 
 	}
 
 	cleanedBody := cleanChirpBody(req.Body)
-
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
-		sendJSONResponse(w, ErrorResponse{Error: "Invalid user_id"}, http.StatusBadRequest)
-		return
-	}
 
 	dbChirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
 		Body:   cleanedBody,

@@ -67,3 +67,22 @@ Content-Type: application/json
 ###
 POST http://localhost:8080/admin/reset
 Content-Type: application/json
+
+###
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "email": "lane@example.com",
+  "password": "04234",
+  "expires_in_seconds": 120
+}
+
+###
+POST http://localhost:8080/api/chirps
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHkiLCJzdWIiOiI0M2Y1ODY2My0zMzRiLTRmZTQtODIxOS1hYTI0MWI1NGFjNmYiLCJleHAiOjE3Mzk5MTY5NTMsImlhdCI6MTczOTkxNjgzM30._P-xhTtQnpGKLs7I2IJ2t80Y82VTd46VxrwrRJpmJTw
+
+{
+  "body": "This is my first chirp!"
+}
