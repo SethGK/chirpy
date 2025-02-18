@@ -46,3 +46,24 @@ Content-Type: application/json
   "user_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 
+###
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "email": "lane@example.com",
+  "password": "04234"
+}
+
+###
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "email": "lane@example.com",
+  "password": "04234"
+}
+
+###
+POST http://localhost:8080/admin/reset
+Content-Type: application/json

@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/SethGK/chirpy/internal/auth"
 	"github.com/SethGK/chirpy/internal/database"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -24,7 +25,8 @@ type apiConfig struct {
 }
 
 type CreateUserRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type User struct {
@@ -114,6 +116,10 @@ func main() {
 		apiCfg.handlerGetChirp(w, r)
 	})
 
+	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerLogin(w, r)
+	})
+
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
@@ -181,7 +187,17 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userRes, err := cfg.db.CreateUser(r.Context(), req.Email)
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		log.Printf("Error hashing password: %s", err)
+		sendJSONResponse(w, ErrorResponse{Error: "Failed to process password"}, http.StatusInternalServerError)
+		return
+	}
+
+	userRes, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		Email:          req.Email,
+		HashedPassword: hashedPassword,
+	})
 	if err != nil {
 		log.Printf("Error creating user: %s", err)
 		sendJSONResponse(w, ErrorResponse{Error: "Failed to create user"}, http.StatusInternalServerError)
