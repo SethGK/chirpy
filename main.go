@@ -102,9 +102,13 @@ func main() {
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerAdminMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerAdminReset)
-	// Register the new chirp endpoint.
+
 	mux.HandleFunc("POST /api/chirps", func(w http.ResponseWriter, r *http.Request) {
 		handlerCreateChirp(&apiCfg, w, r)
+	})
+
+	mux.HandleFunc("GET /api/chirps", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerGetAllChirps(w, r)
 	})
 
 	srv := &http.Server{
