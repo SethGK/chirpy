@@ -110,6 +110,9 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", func(w http.ResponseWriter, r *http.Request) {
 		apiCfg.handlerGetAllChirps(w, r)
 	})
+	mux.HandleFunc("GET /api/chirps/", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerGetChirp(w, r)
+	})
 
 	srv := &http.Server{
 		Addr:    ":" + port,

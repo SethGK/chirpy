@@ -1,8 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
@@ -30,4 +34,44 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 	}
 
 	sendJSONResponse(w, apiChirps, http.StatusOK)
+}
+
+func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error": "Invalid request method"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	chirpIDStr := strings.TrimPrefix(r.URL.Path, "/api/chirps/")
+	if chirpIDStr == "" || chirpIDStr == r.URL.Path {
+		http.NotFound(w, r)
+		return
+	}
+
+	chirpID, err := uuid.Parse(chirpIDStr)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid chirp ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	dbChirp, err := cfg.db.GetChirp(r.Context(), chirpID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.NotFound(w, r)
+			return
+		}
+		log.Printf("Error retrieving chirp: %s", err)
+		sendJSONResponse(w, ErrorResponse{Error: "Failed to retrieve chirp"}, http.StatusInternalServerError)
+		return
+	}
+
+	apiChirp := Chirp{
+		ID:        dbChirp.ID,
+		CreatedAt: dbChirp.CreatedAt,
+		UpdatedAt: dbChirp.UpdatedAt,
+		Body:      dbChirp.Body,
+		UserID:    dbChirp.UserID,
+	}
+
+	sendJSONResponse(w, apiChirp, http.StatusOK)
 }
