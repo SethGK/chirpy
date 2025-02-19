@@ -125,6 +125,12 @@ func main() {
 	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
 		apiCfg.handlerLogin(w, r)
 	})
+	mux.HandleFunc("POST /api/refresh", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerRefresh(w, r)
+	})
+	mux.HandleFunc("POST /api/revoke", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerRevoke(w, r)
+	})
 
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -227,7 +233,7 @@ func handlerCreateChirp(cfg *apiConfig, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	tokenString, err := auth.GetBearersToken(r.Header)
+	tokenString, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -299,4 +305,16 @@ func sendJSONResponse(w http.ResponseWriter, response interface{}, statusCode in
 	}
 
 	w.Write(jsonData)
+}
+
+func respondWithError(w http.ResponseWriter, status int, message string, err error) {
+	response := map[string]string{
+		"error":   message,
+		"details": err.Error(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+
+	json.NewEncoder(w).Encode(response)
 }

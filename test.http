@@ -1,3 +1,4 @@
+### Validate a valid chirp
 POST http://localhost:8080/api/validate_chirp
 Content-Type: application/json
 
@@ -5,7 +6,7 @@ Content-Type: application/json
   "body": "This is a valid chirp!"
 }
 
-###
+### Validate an excessively long chirp
 POST http://localhost:8080/api/validate_chirp
 Content-Type: application/json
 
@@ -13,7 +14,7 @@ Content-Type: application/json
   "body": "This is an invalid chirp because it is way too long................................................................................................."
 }
 
-###
+### Validate a chirp with disallowed words
 POST http://localhost:8080/api/validate_chirp
 Content-Type: application/json
 
@@ -21,15 +22,15 @@ Content-Type: application/json
   "body": "I dislike the kerfuffle and the sharbert situation"
 }
 
-###
+### Create a user without a password
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-    "email": "user5@example.com"
+  "email": "user5@example.com"
 }
 
-###
+### Create another user
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
@@ -37,7 +38,7 @@ Content-Type: application/json
   "email": "saul@bettercall.com"
 }
 
-###
+### Create a chirp for an existing user
 POST http://localhost:8080/api/chirps
 Content-Type: application/json
 
@@ -46,7 +47,7 @@ Content-Type: application/json
   "user_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 
-###
+### Create a user with a password
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
@@ -55,7 +56,7 @@ Content-Type: application/json
   "password": "04234"
 }
 
-###
+### Login with valid credentials
 POST http://localhost:8080/api/login
 Content-Type: application/json
 
@@ -64,11 +65,11 @@ Content-Type: application/json
   "password": "04234"
 }
 
-###
+### Admin reset the system
 POST http://localhost:8080/admin/reset
 Content-Type: application/json
 
-###
+### Login with an expiration time
 POST http://localhost:8080/api/login
 Content-Type: application/json
 
@@ -78,11 +79,29 @@ Content-Type: application/json
   "expires_in_seconds": 120
 }
 
-###
+### Create a chirp with an authentication token
 POST http://localhost:8080/api/chirps
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHkiLCJzdWIiOiI0M2Y1ODY2My0zMzRiLTRmZTQtODIxOS1hYTI0MWI1NGFjNmYiLCJleHAiOjE3Mzk5MTY5NTMsImlhdCI6MTczOTkxNjgzM30._P-xhTtQnpGKLs7I2IJ2t80Y82VTd46VxrwrRJpmJTw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHkiLCJzdWIiOiJiNGI1MjUwYy0wNTMyLTRjOTctOGM4OC0yZTBjMDVhMTE1ODkiLCJleHAiOjE3Mzk5MzEwNTQsImlhdCI6MTczOTkzMDkzNH0.GdFfyOKpZtLTohT60IVB2wxrI-GooctkZeHkfSKf1pU
 
 {
   "body": "This is my first chirp!"
 }
+
+### Attempt to create a chirp without authentication
+POST http://localhost:8080/api/chirps
+Content-Type: application/json
+
+{
+  "body": "This chirp should fail due to missing authentication!"
+}
+
+### Attempt to log in with incorrect credentials
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "email": "lane@example.com",
+  "password": "wrongpassword"
+}
+
