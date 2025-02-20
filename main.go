@@ -131,6 +131,9 @@ func main() {
 	mux.HandleFunc("POST /api/revoke", func(w http.ResponseWriter, r *http.Request) {
 		apiCfg.handlerRevoke(w, r)
 	})
+	mux.HandleFunc("PUT /api/users", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerUpdateUser(w, r)
+	})
 
 	srv := &http.Server{
 		Addr:    ":" + port,
