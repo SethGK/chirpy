@@ -134,6 +134,9 @@ func main() {
 	mux.HandleFunc("PUT /api/users", func(w http.ResponseWriter, r *http.Request) {
 		apiCfg.handlerUpdateUser(w, r)
 	})
+	mux.HandleFunc("DELETE /api/chirps/", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerDeleteChirp(w, r)
+	})
 
 	srv := &http.Server{
 		Addr:    ":" + port,
