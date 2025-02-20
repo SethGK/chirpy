@@ -31,10 +31,12 @@ type CreateUserRequest struct {
 }
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdateAt  time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
+	ID             uuid.UUID `json:"id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdateAt       time.Time `json:"updated_at"`
+	Email          string    `json:"email"`
+	HashedPassword string    `json:"-"`
+	IsChirpyRed    bool      `json:"is_chirpy_red"`
 }
 
 type ChirpRequest struct {
@@ -136,6 +138,9 @@ func main() {
 	})
 	mux.HandleFunc("DELETE /api/chirps/", func(w http.ResponseWriter, r *http.Request) {
 		apiCfg.handlerDeleteChirp(w, r)
+	})
+	mux.HandleFunc("POST /api/polka/webhooks", func(w http.ResponseWriter, r *http.Request) {
+		apiCfg.handlerPolkaWebhooks(w, r)
 	})
 
 	srv := &http.Server{

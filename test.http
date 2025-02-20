@@ -105,3 +105,14 @@ Content-Type: application/json
   "password": "wrongpassword"
 }
 
+###
+POST http://localhost:8080/api/polka/webhooks
+Content-Type: application/json
+
+{
+  "event": "user.upgraded",
+  "data": {
+    "user_id": "3311741c-680c-4546-99f3-fc9efac2036c"
+  }
+}
+
