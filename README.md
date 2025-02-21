@@ -22,15 +22,18 @@ Chirpy is a micro-blogging REST API built with Go. Users can post short messages
    cd chirpy
 
 2. **Create a .env file in the project root with:**
-    ```DB_URL=postgres://user:password@localhost:5432/chirpy?sslmode=disable
+    ```bash
+    DB_URL=postgres://user:password@localhost:5432/chirpy?sslmode=disable
     JWT_SECRET=your_jwt_secret_here
     POLKA_KEY=f271c81ff7084ee5b99a5091b42d486e
     PLATFORM=dev
 
 3. **Run the database migration and generate sqlc code**
-    ```goose Up
+    ```bash
+    goose Up
     sqlc generate
 
 4. **Run the application**
-    ```go run .
+    ```bash
+    go run .
 
