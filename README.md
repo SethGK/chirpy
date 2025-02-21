@@ -14,6 +14,13 @@ Chirpy is a micro-blogging REST API built with Go. Users can post short messages
 - **Secure Authentication:**  
   Uses JWTs that expire after 1 hour for access and refresh tokens that expire after 60 days.
 
+- **Additional Features**
+  These query parameters can be used to sort all chirps and get all chirps by user
+  /api/chirps?sort=asc
+  /api/chirps?sort=desc
+  /api/chirps?author_id=<uuid>&sort=asc
+  /api/chirps?author_id=<uuid>&sort=desc
+
 ## Installation and Setup
 
 1. **Clone the Repository:**
