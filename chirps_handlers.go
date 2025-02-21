@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/SethGK/chirpy/internal/database"
@@ -48,6 +49,17 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 			UpdatedAt: c.UpdatedAt,
 			Body:      c.Body,
 			UserID:    c.UserID,
+		})
+	}
+
+	sortParam := r.URL.Query().Get("sort")
+	if strings.ToLower(sortParam) == "desc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[j].CreatedAt.Before(chirps[i].CreatedAt)
+		})
+	} else {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].CreatedAt.Before(chirps[j].CreatedAt)
 		})
 	}
 
