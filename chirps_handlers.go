@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/SethGK/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -15,16 +16,33 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	chirps, err := cfg.db.GetAllChirps(r.Context())
+	authorIDstr := r.URL.Query().Get("author_id")
+
+	var (
+		dbChirps []database.Chirp
+		err      error
+	)
+
+	if authorIDstr != "" {
+		authorID, parseErr := uuid.Parse(authorIDstr)
+		if parseErr != nil {
+			http.Error(w, "Invalid author_id", http.StatusBadRequest)
+			return
+		}
+		dbChirps, err = cfg.db.GetChirpsByAuthor(r.Context(), authorID)
+	} else {
+		dbChirps, err = cfg.db.GetAllChirps(r.Context())
+	}
+
 	if err != nil {
 		log.Printf("Error retrieving chirps: %s", err)
 		sendJSONResponse(w, ErrorResponse{Error: "Failed to retrieve chirps"}, http.StatusInternalServerError)
 		return
 	}
 
-	var apiChirps []Chirp
-	for _, c := range chirps {
-		apiChirps = append(apiChirps, Chirp{
+	var chirps []Chirp
+	for _, c := range dbChirps {
+		chirps = append(chirps, Chirp{
 			ID:        c.ID,
 			CreatedAt: c.CreatedAt,
 			UpdatedAt: c.UpdatedAt,
@@ -33,7 +51,7 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 		})
 	}
 
-	sendJSONResponse(w, apiChirps, http.StatusOK)
+	sendJSONResponse(w, chirps, http.StatusOK)
 }
 
 func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
